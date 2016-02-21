@@ -1,0 +1,58 @@
+#! /usr/bin/env python
+#encoding=utf-8
+import smtplib
+from email.mime.text import MIMEText
+
+def send_mail(text, active_map):
+    active_content = ''
+    if active_map != None:
+        value_list = active_map.values()
+        active_content = '<br>'.join(value_list)
+    text = '存存的收藏夹有新货啦！！！ %s: <br> %s' % (text, active_content)
+    #text = text.encode('utf-8')
+    msg = MIMEText(text, _subtype='html', _charset='utf-8')
+    msg['Accept-Language'] = "zh-CN"
+    msg['Accept-Charset'] = "ISO-8859-1,utf-8"
+
+    msg['Subject'] = u'存存的收藏夹有新的动态'
+    sender = 'xiangzi777@sjtu.edu.cn'
+    receiver = 'xiangzi777@sjtu.edu.cn, bubble_chun@sjtu.edu.cn'
+    #sender = 'dengxiang.liu@datayes.com'
+    #receiver = 'dengxiang.liu@datayes.com'
+    msg['From'] = sender
+    msg['To'] = receiver
+
+    s = smtplib.SMTP('smtp.datayes.com')
+    #s = smtplib.SMTP('mail.sjtu.edu.cn')
+    s.sendmail(sender, receiver, msg.as_string()) 
+
+active_pre_list = {}
+active_now_list = {}
+
+pre_file_obj = open('collection_pre.log', 'r')
+now_file_obj = open('collection_now.log', 'r')
+
+for num, line in enumerate(pre_file_obj):
+    link = line.strip().split('\t')[1]
+    active_pre_list[link] = line
+
+for num, line in enumerate(now_file_obj):
+    link = line.strip().split('\t')[1]
+    if link not in active_pre_list:
+        active_pre_list[link] = line
+        active_now_list[link] = line
+
+pre_file_obj.close()
+now_file_obj.close()
+
+if len(active_now_list) > 0:
+    pre_file_obj = open('collection_pre.log', 'w')
+    for link in active_pre_list:
+        pre_file_obj.write(active_pre_list[link])
+    print "have new active"
+    pre_file_obj.close()
+    send_mail('new', active_now_list)
+    print "send email"
+else:
+    print "have no new active"
+    #send_mail('no', None)
